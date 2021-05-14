@@ -1,0 +1,170 @@
+"Phrases"
+{	
+	"ChallengeMenuTitle"
+	{
+		"en"		"Challenge: Select your opponent"
+		"pl"		"Challenge: Wybierz przeciwnika"
+	}
+	"ChallengeMenuTitle2"
+	{
+		"en"		"Challenge: Select race style"
+		"pl"		"Challenge: Wybierz styl"
+	}
+	"ChallengeMenuTitle3"
+	{
+		"en"		"Challenge: Select track"
+		"pl"		"Challenge: Wybierz track"
+	}
+	"ChallengeMenuTitle4"
+	{
+		"en"		"Challenge: Select race time"
+		"pl"		"Challenge: Wybierz czas wyścigu"
+	}
+	"ChallengeRequestSent"
+	{
+		"#format"   "{1:s},{2:s}"
+		"en"        "Challenge request sent to {1}{2}"
+		"pl"        "Wyzwałeś {1}{2}"
+	}
+	"ChallengeRequestReceive"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s},{7:s},{8:s},{9:s},{10:s},{11:d},{12:s},{13:s}"
+		"en"        "{1}{2} {3}challenged you to a race. Style: {4}{5}{6}, Track: {7}{8}{9}, Duration: {10}{11}min{12}. You have 20 seconds to {13}!accept."
+		"pl"        "{1}{2} {3}wyzwał cię do wyścigu. Style: {4}{5}{6}, Track: {7}{8}{9}, Czas: {10}{11}min{12}. Masz 20 sekund na wpisanie {13}!accept."
+	}
+	"ChallengeAccept"
+	{
+		"en"        "Challenge accepted."
+		"pl"        "Wyzwanie zaakceptowane."
+	}
+	"ChallengeSurrenderAnnounce"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s}"
+		"en"        "{1}{2} {3}won a race against {4}{5}! {6}(Surrender)"
+		"pl"        "{1}{2} {3}wygrał wyścig przeciwko {4}{5}! {6}(Poddanie)"
+	}
+	"ChallengeInRace"
+	{
+		"en"        "You are already in a challenge."
+		"pl"        "Nie da rady. Jesteś w trakcie wyścigu."
+	}
+	"ChallengeNoPlayers"
+	{
+		"en"        "No valid players found."
+		"pl"		"Nie znaleziono graczy."
+	}
+	"ChallengeOpponentInRace"
+	{
+		"#format"   "{1:s},{2:s},{3:s}"
+		"en"        "{1}{2} {3}is already in a race."
+		"pl"		"{1}{2} {3}jest już w wyścigu."
+	}
+	"ChallengeStarted1"
+	{
+		"en"        "Go!"
+		"pl"		"Jazda!"
+	}
+	"ChallengeStarted2"
+	{	
+		"#format"	"{1:s}"
+		"en"        "If you want to surrender type {1}!surrender"
+		"pl"        "Wpisz {1}!surrender aby się poddać."
+	}
+	"ChallengeStarted3"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"        "Both of you can type {1}!abort {2}in chat to cancel the race."
+		"pl"        "Obaj wpiszcie {1}!abort {2}aby przerwać wyścig."
+	}
+	"ChallengeWon"
+	{
+		"en"        "Race won! (your opponent has left the server)"
+		"pl"        "Wygrałeś wyścig! (twój przeciwnik opuścił serwer)"
+	}
+	"ChallengeAborted"
+	{
+		"#format"   "{1:s},{2:s},{3:s}"
+		"en"        "Race versus {1}{2} {3}aborted."
+		"pl"        "Wyścig przeciwko {1}{2} {3}przerwany."
+	}
+	"ChallengeFinishAnnounce"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s},{7:s},{8:.3f},{9:s},{10:s},{11:.3f},{12:s}"
+		"en"        "{1}{2} {3}won a race against {4}{5}{6} [{7}{8}s {9}vs {10}{11}s{12}]"
+		"pl"        "{1}{2} {3}wygrał wyścig przeciwko {4}{5}{6} [{7}{8}s {9}vs {10}{11}s{12}]"
+	}
+	"ChallengeFinishAnnounceTie"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s},{7:s},{8:.3f},{9:s},{10:s},{11:.3f},{12:s}"
+		"en"        "{1}{2} {3tied with {4}{5}{6} [{7}{8}s {9}vs {10}{11}s{12}]"
+		"pl"        "{1}{2} {3}zremisował {4}{5}{6} [{7}{8}s {9}vs {10}{11}s{12}]"
+	}
+	"ChallengeExpire"
+	{
+		"en"        "Race request expired :("
+		"pl"        "Zaproszenie do wyścigu wygasło :("
+	}
+	"ChallengeDisagreeAbort"
+	{
+		"en"		"You have disagreed to abort the challenge."
+		"pl"		"Odmówiłeś przerwania wyścigu."
+	}
+	"ChallengeAgreeAbort"
+	{
+		"en"		"You have agreed to abort the challenge. Waiting for your opponent..."
+		"pl"		"Zaakceptowałeś przerwanie wyścigu. Oczekiwanie na przeciwnika..."
+	}
+	"ChallengeAbortRequest"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"Your opponent has requested to abort the challenge. Type {1}!abort {2}for race to be aborted"
+		"pl"		"Twój przeciwnik chce przerwać wyścig. Wpisz {1}!abort {2}aby przerwać wyścig."
+	}
+	"ChallengeAnnounce"
+	{
+		"#format"	"{1:s},{2:s}{3:s},{4:s},{5:s},{6:s},{7:s}"
+		"en"		"Challenge: {1} vs. {2}. Style: {3}{4}{5}. Track: {6}{7}"
+		"pl"		"Challenge: {1} vs. {2}. Style: {3}{4}{5}. Track: {6}{7}"
+	}
+	"ChallengeCountdown"
+	{
+		"#format"	"{1:d}"
+		"en"		"{1}"
+		"pl"		"{1}"
+	}
+	"ChallengeStyleChange"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s}"
+		"en"        "{1}{2} {3}won a race against {4}{5} {6}(Changed style during race)."
+		"pl"        "{1}{2} {3}wygrał wyścig przeciwko {4}{5} {6}(Zmiana stylu podczas wyścigu)."
+	}
+	"ChallengeRaceDisconnect"
+	{
+		"#format"   "{1:s},{2:s},{3:s},{4:s},{5:s},{6:s}"
+		"en"        "{1}{2} {3}won a race against {4}{5} {6}(Opponent disconnected)."
+		"pl"        "{1}{2} {3}wygrał wyścig przeciwko {4}{5} {6}(Przeciwnik wyszedł))."
+	}
+	"ChallengeTimeLeftSeconds"
+	{
+		"#format"	"{1:d}"
+		"en"        "{1}s left"
+		"pl"        "Pozostało {1}s"
+	}
+	"ChallengeTimeLeftMinutes"
+	{
+		"#format"	"{1:d}"
+		"en"        "{1}min left"
+		"pl"        "Pozostało {1}min"
+	}
+	"ChallengeRankInfo"
+	{
+		"#format"	"{1:s},{2:d}{3:s},{4:s},{5:d},{6:s},{7:s},{8:.3f},{9:s}"
+		"en"		"Your rank is {1}{2}{3} out of {4}{5}{6} with {7}{8}{9} points."
+		"pl"		"Jesteś {1}{2}{3} na {4}{5}{6} graczy ({7}{8}{9} pkt)."
+	}
+	"ChallengeRankInfoUnranked"
+	{
+		"en"		"You're unranked. Win a challenge to get ranked :)"
+		"pl"		"Nie ma cię w rankingu. Wygraj wyścig aby się w nim znaleźć :)"
+	}
+}
