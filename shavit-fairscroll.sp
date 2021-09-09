@@ -131,10 +131,7 @@ public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int tr
 	char sSpecial[stylestrings_t::sSpecialString];
 	Shavit_GetStyleStrings(newstyle, sSpecialString, sSpecial, stylestrings_t::sSpecialString);
 
-	stylesettings_t aSettings;
-	Shavit_GetStyleSettings(newstyle, aSettings);
-
-	gB_FairscrollStyle[client] = (StrContains(sSpecial, "fairscroll", false) != -1 && !aSettings.bAutobhop);
+	gB_FairscrollStyle[client] = (StrContains(sSpecial, "fairscroll", false) != -1) && !Shavit_GetStyleSettingBool(Shavit_GetBhopStyle(client), "autobhop");
 }
 
 #if defined AUTOSCROLL
