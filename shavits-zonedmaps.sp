@@ -227,6 +227,8 @@ public void LoadAllMaps()
 			LogError("Unable to create a valid map list.");
 		}
 	}
+	g_aAllMapsList.Sort(Sort_Ascending, Sort_String);
+
 	
 	char error[256];
 	g_hDatabase = SQL_Connect("shavit", true, error, sizeof(error));
