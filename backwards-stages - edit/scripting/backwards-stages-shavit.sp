@@ -7,6 +7,8 @@
 #include <cstrike>
 #include <clientprefs>
 
+#include <shavit/core>
+
 // Comment out to use 1.10 natives. otherwise it will depend on the extension
 // #define USE_EXTENSION
 // 
@@ -344,14 +346,6 @@ public void FindAndMarkTeleportDestinations()
 		}
 	}
 }
-
-bool IsValidClient(int client)
-{
-	if (!(1 <= client <= MaxClients) || !IsClientConnected(client) || !IsClientInGame(client) || IsClientSourceTV(client) || IsClientReplay(client))
-		return false;
-		
-	return true;
-}
  
 int CheckTriggerUnderPlayer(int client)
 {
@@ -393,7 +387,7 @@ public bool TraceRayDontHitSelf(int entity, int mask, any data)
 	return (entity != data);  
 }
 
-void EndRunOnStage(int client, int type)
+void EndRunOnStage(int client, int track)
 {
 	if(!g_ClientComputingTime[client])
 		return;
@@ -989,18 +983,18 @@ void ShowHudMsg(int client, char[] message, float x, float y, int r, int g, int 
 	}
 }
 
-public void OnStyleChanged(int client, int OldStyle, int NewStyle, int Type)
+public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int track, bool manual)
 {
 	if(client > -1 && client <= MAXPLAYERS+1)
 	{
 		if(!g_bWantsStageRecords[client])
 			return;
 			
-		if(Type == 0) //Normal
+		if(track == 0) //Normal
 		{
 			ResetPlayerCurrentRun(client);
 		}
-		else if(Type == 1) //Bonus
+		else if(track == 1) //Bonus
 		{
 			ResetPlayerCurrentRun(client);
 			g_ClientComputingTime[client] = false; //Not Supported Yet.
@@ -1008,31 +1002,37 @@ public void OnStyleChanged(int client, int OldStyle, int NewStyle, int Type)
 	}
 }
 
-public void OnTimerStart_Post(int client, int Type, int Style)
+public Action Shavit_OnStart(int client, int track)
 {
 	if(client > -1 && client <= MAXPLAYERS+1)
 	{
 		if(!g_bWantsStageRecords[client])
-			return;
+			return Plugin_Handled;
 			
-		if(Type == 0) //Normal
+		if(track == 0) //Normal
 		{
 			ResetPlayerCurrentRun(client);
 		}
-		else if(Type == 1) //Bonus
+		else if(track == 1) //Bonus
 		{
 			ResetPlayerCurrentRun(client);
 			g_ClientComputingTime[client] = false; //Not Supported Yet.
 		}
+		else
+		{
+			return Plugin_Handled;
+		}
 	}
+
+	return Plugin_Continue;
 }
 
-public void OnTimerFinished_Post(int client, float Time, int Type, int Style, bool NewTime, int OldPosition, int NewPosition)
+public void Shavit_OnFinish(int client, int style, float time, int jumps, int strafes, float sync, int track, float oldtime, float perfs, float avgvel, float maxvel, int timestamp)
 {
 	if(!g_bWantsStageRecords[client])
 		return;
 		
-	EndRunOnStage(client, Type);
+	EndRunOnStage(client, track);
 }
 
 float GetClientVelocity(int client)
