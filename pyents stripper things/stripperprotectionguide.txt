@@ -1,0 +1,53 @@
+Stripper Config Map Protection Guide
+by Soft Serve (+ Other people)
+
+Want to be a total dickhead and prevent servers from playing your map? Say no more. This guide has exactly what you need. 
+Credit goes to BotoX for the python scripts.
+
+---
+
+1. Install Python in order to run the script -- https://www.python.org/
+
+2. Open your map in Hammer and put all point entities that you wish to hide (with certain exceptions, see note below) in a visgroup. Let's call this visgroup "secret". 
+Examples of point entities that you may want to hide: logic/math entities, player spawn points, weapons, path_tracks...
+
+IMPORTANT NOTE: Do NOT hide point entities which contain content that needs to be precached. The big examples of this are prop_dynamic and ambient_generic. 
+Dynamic models that are strippered into a map without being precached will display as error models, and sounds will not play. 
+If you use a different method for precaching models/sounds then it is possible to hide these as well, but that is outside the scope of this guide.
+
+3. Hide the "secret" visgroup (untick the checkbox).
+
+4. Do a full compile of your map that you want to distribute. For the purposes of this guide, we are releasing a map called "ze_crab_escape_v1".
+
+5. Make a duplicate of the map (under a new name), let's call it "ze_crab_escape_v1_ents".
+Re-save the vmf with that name too. This version of the map will be compiled WITH all hidden entities.
+
+6. Un-hide the "secret" visgroup.
+
+7. Compile the map with BSP "Only entities", VIS "No" and RAD "No".
+
+Now you can do 2 things:
+- Protect even more the map (step 8.)
+- Generate the stripper cfg (step 12.)
+
+8 a. If CS:S, install Entspy, it's a tool that allow you to edit entity properties of a BSP file -- https://developer.valvesoftware.com/wiki/Entspy
+8 b. If CS:GO, use VIDE and its Entity Lump Editor -- https://developer.valvesoftware.com/wiki/VIDE
+
+9. Load "ze_crab_escape_v1.bsp" (the one without point entities) in Entspy.
+
+10. Delete every brush entities of the map by selecting them and pressing the Delete button.
+
+11. Once you are done, save the BSP under the same name -- Make sure you don't preserve the checksum.
+
+12. Copy both BSP files to the same folder as entities.py ("ze_crab_escape_v1.bsp" and "ze_crab_escape_v1_ents.bsp")
+
+13. Open a command prompt window and navigate to that folder. If the script is located in C:\PyEnts you would simply type: cd C:\PyEnts
+
+14. The syntax to run the script is the following: python entities.py original.bsp modified.bsp > strippercfg.cfg
+This will do a comparison between the two BSP files and output a text file with any entity differences, ready to be loaded by the Stripper plugin.
+
+So run the script by typing: 
+python entities.py ze_crab_escape_v1.bsp ze_crab_escape_v1_ents.bsp > ze_crab_escape_v1.cfg
+(In this case, the cfg will add all the hidden entities and all the deleted brush entities back)
+
+Congrats, you now have a server-exclusive map. Jerk.
