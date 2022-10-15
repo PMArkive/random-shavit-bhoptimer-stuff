@@ -1,5 +1,6 @@
 
 #define MY_SERVER_NAME "US1"
+#define TIMER_INTERVAL 1.0
 
 Database gH_SQL = null;
 int gI_LastMessageID = -1;
@@ -38,11 +39,13 @@ void Query_GetLatest(Database db, DBResultSet results, const char[] error, any d
 	}
 
 	gI_LastMessageID = results.FetchInt(0);
-	CreateTimer(0.75, Timer_GetMessages, 0, TIMER_REPEAT);
+	CreateTimer(TIMER_INTERVAL, Timer_GetMessages);
 }
 
 void Query_GetMessages(Database db, DBResultSet results, const char[] error, any data)
 {
+	CreateTimer(TIMER_INTERVAL, Timer_GetMessages);
+
 	if (results == null)
 	{
 		LogError("Failed to get latest messages. Error = '%s'", error);
@@ -57,12 +60,12 @@ void Query_GetMessages(Database db, DBResultSet results, const char[] error, any
 		if (IsClientInGame(i) && (IsClientSourceTV(i) || !IsFakeClient(i)))
 			clients[numclients++] = i;
 	}
-	if (!numclients) return;
 
 	do
 	{
 		int id = results.FetchInt(0);
 		if (id > gI_LastMessageID) gI_LastMessageID = id;
+		if (!numclients) continue;
 		char server[21];
 		results.FetchString(1, server, sizeof(server));
 		char playername[33];
