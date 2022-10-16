@@ -115,7 +115,7 @@ void PrintNerds(int[] clients, int numclients, const char[] server, const char[]
 Action Timer_GetMessages(Handle timer)
 {
 	char query[512];
-	FormatEx(query, sizeof(query), "SELECT id, server, playername, message FROM messages WHERE id > %d ;", gI_LastMessageID, MY_SERVER_NAME); // AND server != '%s'
+	FormatEx(query, sizeof(query), "SELECT id, server, playername, message FROM messages WHERE id > %d AND server != '%s';", gI_LastMessageID, MY_SERVER_NAME);
 	gH_SQL.Query(Query_GetMessages, query);
 	return Plugin_Continue;
 }
