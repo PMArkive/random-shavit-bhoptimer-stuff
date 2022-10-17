@@ -140,7 +140,7 @@ void DoubleJump(int client)
 	}
 }
 
-void PushClient(int client, float angles[3], float power, VelocityOverride override[3]=VO_None)
+void PushClient(int client, float angles[3], float power, VelocityOverride override[3]={VO_None, VO_None, VO_None})
 {
 	// Thank you DarthNinja & javalia for this.
 	float fNewVelocity[3];
