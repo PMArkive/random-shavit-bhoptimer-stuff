@@ -5,10 +5,33 @@ public Action Command_Jointeam(int client, const char[] command, int args)
 		return Plugin_Continue;
 	}
 
-	char arg1[8];
-	GetCmdArg(1, arg1, 8);
+	char arg1[16];
+	GetCmdArg(1, arg1, sizeof(arg1));
+	int iTeam;
 
-	int iTeam = StringToInt(arg1);
+	if (gEV_Type == Engine_TF2)
+	{
+		iTeam = 2; // defaults to Red
+
+		if (StrEqual(arg1, "spectate", false) || StrEqual(arg1, "spectatearena", false))
+			iTeam = 1;
+		else if (StrEqual(arg1, "red", false))
+			iTeam = 2;
+		else if (StrEqual(arg1, "blue", false))
+			iTeam = 3;
+		else if (StrEqual(arg1, "auto", false))
+			iTeam = GetRandomInt(2, 3); // whatever
+		else if (StrEqual(arg1, "unassigned", false))
+			return Plugin_Handled;
+	
+		if (iTeam == GetClientTeam(client))
+			return Plugin_Handled;
+	}
+	else
+	{
+		iTeam = StringToInt(arg1);
+	}
+
 	int iHumanTeam = GetHumanTeam();
 
 	if (iHumanTeam != 0 && iTeam != 1)
@@ -22,6 +45,15 @@ public Action Command_Jointeam(int client, const char[] command, int args)
 	}
 
 	CleanSwitchTeam(client, iTeam);
+
+	if (gEV_Type == Engine_TF2 && -1 == StrContains(command, "nomenus"))
+	{
+		BfWrite msg = view_as<BfWrite>(StartMessageOne("VGUIMenu", client));
+		msg.WriteString(iTeam == 2 ? "class_red" : "class_blue");
+		msg.WriteByte(1);
+		msg.WriteByte(0);
+		EndMessage();
+	}
 
 	if(gCV_RespawnOnTeam.BoolValue && iTeam != 1)
 	{
