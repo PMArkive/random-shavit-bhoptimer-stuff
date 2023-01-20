@@ -3,7 +3,11 @@
 #define DEBUG
 
 #define PLUGIN_AUTHOR "CodingCow"
-#define PLUGIN_VERSION "1.00"
+#define PLUGIN_VERSION "1.3"
+// Version 1.0 - First release by Cow
+// Version 1.1 - Added checks for replay data
+// Version 1.2 - Added menu option to change box size
+// Version 1.3 - Added beam color change option
 
 #include <sourcemod>
 #include <sdktools>
@@ -32,16 +36,20 @@ int ghostMode[MAXPLAYERS + 1];
 bool recording[MAXPLAYERS + 1];
 int cmdNum[MAXPLAYERS + 1];
 int beamColor[MAXPLAYERS + 1][4];
+bool beamColorVariety[MAXPLAYERS + 1];
+int boxSize[MAXPLAYERS + 1];
 
 Handle g_hGhostCookie;
 Handle g_hGhostModeCookie;
 Handle g_hTrailCookie;
+Handle g_hBoxSizeCookie;
 
 public void OnPluginStart()
 {
 	g_hGhostCookie = RegClientCookie("GhostTrail", "Ghost Trails", CookieAccess_Protected);
 	g_hTrailCookie = RegClientCookie("TrailColor", "Ghost Trail Color", CookieAccess_Protected);
 	g_hGhostModeCookie = RegClientCookie("GhostMode", "Ghost Trail Mode", CookieAccess_Protected);
+	g_hBoxSizeCookie = RegClientCookie("BoxSize", "BoxSize", CookieAccess_Protected);
 	
 	RegConsoleCmd("sm_ghost", ghostToggle);
 	RegConsoleCmd("sm_beam", BeamMenu);
@@ -58,6 +66,7 @@ public void OnPluginStart()
 		recording[i] = false;
 		cmdNum[i] = 0;
 		beamColor[i] =  { 255, 255, 255, 255 };
+		boxSize[i] = 14;
 	}
 	
 	CreateTimer(300.0, advertise, _, TIMER_REPEAT);
@@ -83,12 +92,31 @@ public void OnClientCookiesCached(int client)
 		beamColor[client] =  { 0, 255, 0, 255 };
 	else if(StrEqual(cookieValue2, "Blue"))
 		beamColor[client] =  { 0, 0, 255, 255 };
+	else if(StrEqual(cookieValue2, "Variety"))
+	{
+		beamColor[client] =  { 122, 122, 122, 255 };
+		beamColorVariety[client] = true;
+	}
 	else
 		beamColor[client] =  { 255, 255, 255, 255 };
+
+	if(StrEqual(cookieValue2, "Variety"))
+	{
+		beamColorVariety[client] = true;
+	}
+	else
+	{
+		beamColorVariety[client] = false;
+	}
+		
 	
 	char cookieValue3[32];
 	GetClientCookie(client, g_hGhostModeCookie, cookieValue3, sizeof(cookieValue3));
 	ghostMode[client] = StringToInt(cookieValue3);
+
+	char cookieValue4[32];
+	GetClientCookie(client, g_hBoxSizeCookie, cookieValue4, sizeof(cookieValue4));
+	boxSize[client] = StringToInt(cookieValue4);
 }
 
 public void OnClientPutInServer(int client)
@@ -139,6 +167,8 @@ public Action ghostToggle(int client, int args)
 	m.AddItem("Enable/Disable", "Enable/Disable");
 	m.AddItem("Beam Color", "Beam Color");
 	m.AddItem("Mode", (ghostMode[client] == 0 ? "Mode: Personal Best" : "Mode: World Record"));
+	m.AddItem("Increase Box Size", "Increase Box Size");
+	m.AddItem("Decrease Box Size", "Decrease Box Size");
 	
 	m.ExitButton = true;
 	m.Display(client, 0);
@@ -152,7 +182,7 @@ public int ghostMenu(Menu menu, MenuAction action, int client, int param2)
 	{		
 		case MenuAction_Select:
 		{
-			char info[16];
+			char info[32];
 			if(menu.GetItem(param2, info, sizeof(info)))
 			{
 				if(StrEqual(info, "Enable/Disable"))
@@ -178,10 +208,16 @@ public int ghostMenu(Menu menu, MenuAction action, int client, int param2)
 					if(ghostMode[client] == 0)
 					{
 						ghostMode[client] = 1;
-						
-						ArrayList ar = Shavit_GetReplayFrames(Shavit_GetBhopStyle(client), Shavit_GetClientTrack(client));
-	
-						GhostData2[client] = ar.Clone();
+
+						ArrayList ar = Shavit_GetReplayFrames(Shavit_GetBhopStyle(client), Shavit_GetClientTrack(client), false);
+
+						if (ar != null) {
+							GhostData2[client] = ar.Clone();
+						}
+						else {
+							PrintToChat(client, "[\x0CGhost\x01] No replay data. Complete the map to create a replay.");
+							GhostData2[client].Clear();
+						}
 					}
 					else
 					{
@@ -195,6 +231,43 @@ public int ghostMenu(Menu menu, MenuAction action, int client, int param2)
 					
 					if(ghostMode[client] == 0)
 						PrintToChat(client, "[\x0CGhost\x01] Complete the map and a Ghost will appear.");
+				}
+				else if(StrEqual(info, "Increase Box Size"))
+				{
+					if (boxSize[client] <= 62)
+					{
+						boxSize[client] += 2;
+						
+						char newSize[32];
+						IntToString(boxSize[client], newSize, sizeof(newSize));
+
+						SetClientCookie(client, g_hBoxSizeCookie, newSize);
+						
+						PrintToChat(client, "[\x0CGhost\x01] Box size increased from: %d to %d", boxSize[client] - 2, boxSize[client]);
+					}
+					else
+					{
+						PrintToChat(client, "[\x0CGhost\x01] \x07Box is too big to increase size.");
+					}
+				}
+				else if(StrEqual(info, "Decrease Box Size"))
+				{
+					if (boxSize[client] >= 4)
+					{
+						boxSize[client] -= 2;
+					
+						char newSize[32];
+						IntToString(boxSize[client], newSize, sizeof(newSize));
+
+						SetClientCookie(client, g_hBoxSizeCookie, newSize);
+						
+						PrintToChat(client, "[\x0CGhost\x01] Box size decreased from: %d to %d", boxSize[client] + 2, boxSize[client]);
+					}
+					else
+					{
+						PrintToChat(client, "[\x0CGhost\x01] \x07Box is too small to decrease size.");
+					}
+					
 				}
 				
 				ghostToggle(client, 0);
@@ -214,6 +287,7 @@ public Action BeamMenu(int client, int args)
 	m.AddItem("Red", "Red");
 	m.AddItem("Green", "Green");
 	m.AddItem("Blue", "Blue");
+	m.AddItem("Variety", "Variety");
 	m.AddItem("White", "White");
 	m.ExitButton = true;
 	m.Display(client, 0);
@@ -246,12 +320,26 @@ public int beamColorMenu(Menu menu, MenuAction action, int client, int param2)
 					beamColor[client] =  { 0, 0, 255, 255 };
 					Format(text, sizeof(text), "\x0CBlue");
 				}
+				else if(StrEqual(info, "Variety"))
+				{
+					beamColor[client] =  { 122, 122, 122, 255 };
+					Format(text, sizeof(text), "\x02Va\x04rie\x0Cty");
+				}
 				else if(StrEqual(info, "White"))
 				{
 					beamColor[client] =  { 255, 255, 255, 255 };
 					Format(text, sizeof(text), "White");
 				}
 				
+				if(StrEqual(info, "Variety"))
+				{
+					beamColorVariety[client] = true;
+				}
+				else
+				{
+					beamColorVariety[client] = false;
+				}
+
 				PrintToChat(client, "[\x0CGhost\x01] Trail Color: %s", text);
 				
 				SetClientCookie(client, g_hTrailCookie, info);
@@ -269,9 +357,15 @@ public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int tr
 {
 	if(ghost[client] && ghostMode[client] == 1)
 	{				
-		ArrayList ar = Shavit_GetReplayFrames(newstyle, track);
-	
-		GhostData2[client] = ar.Clone();
+		ArrayList ar = Shavit_GetReplayFrames(newstyle, track, false);
+
+		if (ar != null) {
+			GhostData2[client] = ar.Clone();
+		} 
+		else {
+			PrintToChat(client, "[\x0CGhost\x01] No replay data. Complete the map to create a replay.");
+			GhostData2[client].Clear();
+		}
 	}
 }
 
@@ -293,9 +387,14 @@ public void Shavit_OnEnterZone(int client, int type, int track, int id, int enti
 		
 		if(ghostMode[client] == 1)
 		{
-			ArrayList ar = Shavit_GetReplayFrames(Shavit_GetBhopStyle(client), Shavit_GetClientTrack(client));
-		
-			GhostData2[client] = ar.Clone();
+			ArrayList ar = Shavit_GetReplayFrames(Shavit_GetBhopStyle(client), Shavit_GetClientTrack(client), false);
+
+			if (ar != null) {
+				GhostData2[client] = ar.Clone();
+			}
+			else {
+				GhostData2[client].Clear();
+			}
 		}
 	}
 	else if(type == Zone_End && recording[client] && ghost[client] && ghostMode[client] == 0)
@@ -369,20 +468,20 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					{
 						float square[4][3];
 						
-						square[0][0] = pos[0] + 14.0;
-						square[0][1] = pos[1] + 14.0;
+						square[0][0] = pos[0] + boxSize[client];
+						square[0][1] = pos[1] + boxSize[client];
 						square[0][2] = pos[2];
 						
-						square[1][0] = pos[0] + 14.0;
-						square[1][1] = pos[1] - 14.0;
+						square[1][0] = pos[0] + boxSize[client];
+						square[1][1] = pos[1] - boxSize[client];
 						square[1][2] = pos[2];
 						
-						square[2][0] = pos[0] - 14.0;
-						square[2][1] = pos[1] - 14.0;
+						square[2][0] = pos[0] - boxSize[client];
+						square[2][1] = pos[1] - boxSize[client];
 						square[2][2] = pos[2];
 						
-						square[3][0] = pos[0] - 14.0;
-						square[3][1] = pos[1] + 14.0;
+						square[3][0] = pos[0] - boxSize[client];
+						square[3][1] = pos[1] + boxSize[client];
 						square[3][2] = pos[2];
 						
 						BeamEffect(client, square[0], square[1], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
@@ -390,6 +489,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 						BeamEffect(client, square[2], square[3], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
 						BeamEffect(client, square[3], square[0], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
 						
+						if(beamColorVariety[client]) {
+							ChangeBeamColor(client);
+						}
+
 						for (int i = 0; i <= MaxClients; i++)
 						{
 							if(IsValidClient(i) && GetClientTeam(i) == CS_TEAM_SPECTATOR && GetEntPropEnt(i, Prop_Send, "m_hObserverTarget") == client)
@@ -450,27 +553,31 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					{
 						float square[4][3];
 						
-						square[0][0] = pos[0] + 14.0;
-						square[0][1] = pos[1] + 14.0;
+						square[0][0] = pos[0] + boxSize[client];
+						square[0][1] = pos[1] + boxSize[client];
 						square[0][2] = pos[2];
 						
-						square[1][0] = pos[0] + 14.0;
-						square[1][1] = pos[1] - 14.0;
+						square[1][0] = pos[0] + boxSize[client];
+						square[1][1] = pos[1] - boxSize[client];
 						square[1][2] = pos[2];
 						
-						square[2][0] = pos[0] - 14.0;
-						square[2][1] = pos[1] - 14.0;
+						square[2][0] = pos[0] - boxSize[client];
+						square[2][1] = pos[1] - boxSize[client];
 						square[2][2] = pos[2];
 						
-						square[3][0] = pos[0] - 14.0;
-						square[3][1] = pos[1] + 14.0;
+						square[3][0] = pos[0] - boxSize[client];
+						square[3][1] = pos[1] + boxSize[client];
 						square[3][2] = pos[2];
 						
 						BeamEffect(client, square[0], square[1], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
 						BeamEffect(client, square[1], square[2], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
 						BeamEffect(client, square[2], square[3], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
 						BeamEffect(client, square[3], square[0], 0.7, 1.0, 1.0, { 255, 105, 180, 255}, 0.0, 0);
-						
+	
+						if(beamColorVariety[client]) {
+							ChangeBeamColor(client);
+						}
+
 						for (int i = 0; i <= MaxClients; i++)
 						{
 							if(IsValidClient(i) && GetClientTeam(i) == CS_TEAM_SPECTATOR && GetEntPropEnt(i, Prop_Send, "m_hObserverTarget") == client)
@@ -496,4 +603,12 @@ public void BeamEffect(int client, float startvec[3], float endvec[3], float lif
 {
 	TE_SetupBeamPoints(startvec, endvec, g_BeamSprite, 0, 0, 66, life, width, endwidth, 0, amplitude, color, speed);
 	TE_SendToClient(client);
+}
+
+public void ChangeBeamColor(int client)
+{
+	beamColor[client][0] =  GetRandomInt(0, 255);
+	beamColor[client][1] =  GetRandomInt(0, 255);
+	beamColor[client][2] =  GetRandomInt(0, 255);
+	beamColor[client][3] =  255;
 }
