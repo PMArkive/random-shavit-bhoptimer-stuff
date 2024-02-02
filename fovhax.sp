@@ -24,7 +24,7 @@ public Action OnPlayerRunCmd(int client)
 	char buf[12];
 	gH_Fov.Get(client, buf, sizeof(buf));
 	int fov = StringToInt(buf);
-	fov = fov < 1 ? 90 : fov;
+	fov = !fov ? 90 : fov;
 	SetEntProp(client, Prop_Send, "m_iFOV", fov);
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", fov);
 	return Plugin_Continue;
