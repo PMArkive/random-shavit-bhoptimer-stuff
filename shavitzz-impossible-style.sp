@@ -11,7 +11,7 @@ public Plugin myinfo =
 	author = "rtldg",
 	description = "(clients need the Generic admin flag to toggle things)",
 	version = "1.0",
-	url = "https://github.com/rtldg/shavitzz-impossible-style"
+	url = "https://github.com/PMArkive/random-shavit-bhoptimer-stuff/blob/main/shavitzz-impossible-style.sp"
 }
 
 Database gH_DB = null;
