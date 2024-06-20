@@ -3,6 +3,7 @@
 //#include <adminmenu>
 
 #include <shavit>
+#include <convar_class>
 
 public Plugin myinfo =
 {
@@ -21,7 +22,10 @@ char gS_Map[PLATFORM_MAX_PATH];
 char gS_VariableStringColor[16];
 char gS_TextStringColor[16];
 bool gB_MapStart = false;
-int gI_MenuPositions[MAXPLAYERS+1]; // TODO: Save instead of using gB_HasMenuOpened?
+//int gI_MenuPositions[MAXPLAYERS+1]; // TODO: Save instead of using gB_HasMenuOpened?
+Convar gCV_ShowStyleSettingOptions = null;
+Convar gCV_ShowOnlyTheseStyles = null;
+ArrayList gH_ShowOnlyTheseStyles = null;
 
 enum struct CurrentMapState
 {
@@ -43,6 +47,10 @@ public void OnPluginStart()
 		SetFailState("Failed to open shavitzz-impossible-style sqlite database");
 
 	SQL_CreateTables();
+
+	gCV_ShowStyleSettingOptions = new Convar("shavitzz_impossible_style_settings", "1", "Show the autobhop/easybhop/uncapped-vel things at the top of the menu.", 0, true, 0.0, true, 1.0);
+	gCV_ShowOnlyTheseStyles = new Convar("shavitzz_impossible_style_only", "", "Show only these styles in the menu.\n(Style names are compared in a case-insensitive way and spaces are trimmed from the ends)\nExamples:\n shavitzz_impossible_style_only \"scroll,_strafe,400 velocity\"\n shavitzz_impossible_style_only \"low gravity, scroll\"\n");
+	Convar.AutoExecConfig();
 }
 
 public void OnMapStart()
@@ -59,12 +67,51 @@ public void OnMapStart()
 	{
 		SQL_QueryCurrentMapState();
 	}
+
+	delete gH_ShowOnlyTheseStyles;
 }
 
 public void OnMapEnd()
 {
 	gB_MapStart = false;
 	gI_MapQueries = 0;
+}
+
+public void OnConfigsExecuted()
+{
+	char buf[512];
+	gCV_ShowOnlyTheseStyles.GetString(buf, sizeof(buf));
+
+	if (buf[0] != '\0')
+	{
+		char exploded[50][50];
+		int count = ExplodeString(buf, ",", exploded, sizeof(exploded), sizeof(exploded[]), false);
+		if (!count) return;
+
+		gH_ShowOnlyTheseStyles = new ArrayList(1);
+
+		for (int i = 0; i < count; i++)
+		{
+			TrimString(exploded[i]);
+			PrintToServer("'%s'", exploded[i]);
+		}
+
+		for (int style = 0, styles = Shavit_GetStyleCount(); style < styles; style++)
+		{
+			char stylename[64];
+			Shavit_GetStyleStrings(style, sStyleName, stylename, sizeof(stylename));
+
+			for (int i = 0; i < count; i++)
+			{
+				if (0 == strcmp(stylename, exploded[i], false))
+				{
+					gH_ShowOnlyTheseStyles.Push(style);
+					PrintToServer("pushed %d", style);
+					break;
+				}
+			}
+		}
+	}
 }
 
 public void OnClientPutInServer(int client)
@@ -107,7 +154,7 @@ bool isStyleSettingsImpossible(int style)
 	return !settings.iEnabled ||
 		(!settings.bAutobhop && gA_State.requires_auto) ||
 		(!settings.bEasybhop && gA_State.requires_easybhop) ||
-		(settings.fVelocityLimit != 0.0 && settings.fVelocityLimit < 1000.0 && gA_State.requires_uncappedvel);
+		(settings.fVelocityLimit != 0.0 && settings.fVelocityLimit < 400.0 && gA_State.requires_uncappedvel);
 }
 
 void OpenTheMenu(int client, int position)
@@ -115,30 +162,38 @@ void OpenTheMenu(int client, int position)
 	int flags = GetAdminFlag(GetUserAdmin(client), Admin_Generic) ? 0 : ITEMDRAW_DISABLED;
 
 	Menu menu = new Menu(MenuHandler_ImpossibleStyle);
-	menu.SetTitle("Map Impossibilities");
+	menu.SetTitle("Map Impossibilities\n ");
 
 	char display[256];
-	FormatEx(display, sizeof(display), "[%s] Requires autobhop", gA_State.requires_auto ? "+" : "-");
-	menu.AddItem("requires_auto", display, flags);
-	FormatEx(display, sizeof(display), "[%s] Requires easybhop", gA_State.requires_easybhop ? "+" : "-");
-	menu.AddItem("requires_easybhop", display, flags);
-	FormatEx(display, sizeof(display), "[%s] Requires no velocity cap\n ", gA_State.requires_uncappedvel ? "+" : "-");
-	menu.AddItem("requires_uncappedvel", display, flags);
 
-	int tempstyle = Shavit_GetBhopStyle(client);
-	Shavit_GetStyleStrings(tempstyle, sStyleName, display, sizeof(display));
-	Format(display, sizeof(display), "[%s] Current style: %s\n ", gA_State.style[tempstyle] ? "+" : "-", display);
-	char numstr[8];
-	IntToString(tempstyle, numstr, sizeof(numstr));
-	menu.AddItem(numstr, display, flags | (isStyleSettingsImpossible(tempstyle) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT));
-
-	for (int i = 0, styles = Shavit_GetStyleCount(); i < styles; i++)
+	if (gCV_ShowStyleSettingOptions.BoolValue)
 	{
+		FormatEx(display, sizeof(display), "[%s] Requires autobhop", gA_State.requires_auto ? "+" : "-");
+		menu.AddItem("requires_auto", display, flags);
+		FormatEx(display, sizeof(display), "[%s] Requires easybhop", gA_State.requires_easybhop ? "+" : "-");
+		menu.AddItem("requires_easybhop", display, flags);
+		FormatEx(display, sizeof(display), "[%s] Requires no velocity cap\n ", gA_State.requires_uncappedvel ? "+" : "-");
+		menu.AddItem("requires_uncappedvel", display, flags);
+	}
+
+	if (!gH_ShowOnlyTheseStyles)
+	{
+		int tempstyle = Shavit_GetBhopStyle(client);
+		Shavit_GetStyleStrings(tempstyle, sStyleName, display, sizeof(display));
+		Format(display, sizeof(display), "[%s] Current style: %s\n ", gA_State.style[tempstyle] ? "+" : "-", display);
+		char numstr[8];
+		IntToString(tempstyle, numstr, sizeof(numstr));
+		menu.AddItem(numstr, display, flags | (isStyleSettingsImpossible(tempstyle) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT));
+	}
+
+	for (int i = 0, styles = gH_ShowOnlyTheseStyles ? gH_ShowOnlyTheseStyles.Length : Shavit_GetStyleCount(); i < styles; i++)
+	{
+		int style = gH_ShowOnlyTheseStyles ? gH_ShowOnlyTheseStyles.Get(i) : i;
 		char name[64], info[8];
-		Shavit_GetStyleStrings(i, sStyleName, name, sizeof(name));
-		FormatEx(display, sizeof(display), "[%s] %s", gA_State.style[i] ? "+" : "-", name);
-		IntToString(i, info, sizeof(info));
-		bool disabled = isStyleSettingsImpossible(i);
+		Shavit_GetStyleStrings(style, sStyleName, name, sizeof(name));
+		FormatEx(display, sizeof(display), "[%s] %s", gA_State.style[style] ? "+" : "-", name);
+		IntToString(style, info, sizeof(info));
+		bool disabled = isStyleSettingsImpossible(style);
 		menu.AddItem(info, display, flags | (disabled ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT));
 	}
 
@@ -209,7 +264,7 @@ int MenuHandler_ImpossibleStyle(Menu menu, MenuAction action, int param1, int pa
 	else if (action == MenuAction_Cancel)
 	{
 		int client = param1;
-		int reason = param2;
+		//int reason = param2;
 		gB_HasMenuOpened[client] = false;
 	}
 	else if (action == MenuAction_End)
