@@ -18,9 +18,10 @@ bool gB_DBInitialized = false;
 int gI_MapQueries = -1;
 bool gB_HasMenuOpened[MAXPLAYERS+1];
 char gS_Map[PLATFORM_MAX_PATH];
-bool gB_Late = false;
-char gS_WarningStringColor[16];
+char gS_VariableStringColor[16];
 char gS_TextStringColor[16];
+bool gB_MapStart = false;
+int gI_MenuPositions[MAXPLAYERS+1]; // TODO: Save instead of using gB_HasMenuOpened?
 
 enum struct CurrentMapState
 {
@@ -32,36 +33,38 @@ enum struct CurrentMapState
 
 CurrentMapState gA_State;
 
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
-{
-	gB_Late = late;
-	return APLRes_Success;
-}
-
 public void OnPluginStart()
 {
 	RegConsoleCmd("sm_impossible_style", Command_ImpossibleStyle, "TODO: description");
+	RegConsoleCmd("sm_impossible_map", Command_ImpossibleStyle, "TODO: description");
+	RegConsoleCmd("sm_impossible", Command_ImpossibleStyle, "TODO: description");
 
 	if (null == (gH_DB = SQLite_UseDatabase("shavitzz-impossible-style", "", 0)))
 		SetFailState("Failed to open shavitzz-impossible-style sqlite database");
 
 	SQL_CreateTables();
-
-	if (gB_Late)
-	{
-		OnMapStart();
-	}
 }
 
 public void OnMapStart()
 {
-	Shavit_GetChatStrings(sMessageVariable, gS_WarningStringColor, sizeof(gS_WarningStringColor));
+	gB_MapStart = true;
+	Shavit_GetChatStrings(sMessageVariable, gS_VariableStringColor, sizeof(gS_VariableStringColor));
 	Shavit_GetChatStrings(sMessageText, gS_TextStringColor, sizeof(gS_TextStringColor));
 	CurrentMapState temp;
 	gA_State = temp;
 	gI_MapQueries = 0;
-	SQL_QueryCurrentMapState();
 	myGetLowercaseMapName(gS_Map);
+
+	if (gB_DBInitialized)
+	{
+		SQL_QueryCurrentMapState();
+	}
+}
+
+public void OnMapEnd()
+{
+	gB_MapStart = false;
+	gI_MapQueries = 0;
 }
 
 public void OnClientPutInServer(int client)
@@ -75,7 +78,9 @@ public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int tr
 	{
 		for (int i = 0; i < 6; i++)
 		{
-			Shavit_PrintToChat(client, "Map is %simpossible%s on this style!", gS_WarningStringColor, gS_TextStringColor);
+			char stylename[64];
+			Shavit_GetStyleStrings(newstyle, sStyleName, stylename, sizeof(stylename));
+			Shavit_PrintToChat(client, "Map is %simpossible%s on this style (%s%s%s)!", gS_VariableStringColor, gS_TextStringColor, gS_VariableStringColor, stylename, gS_TextStringColor);
 		}
 	}
 }
@@ -114,11 +119,11 @@ void OpenTheMenu(int client, int position)
 
 	char display[256];
 	FormatEx(display, sizeof(display), "[%s] Requires autobhop", gA_State.requires_auto ? "+" : "-");
-	menu.AddItem("requires_auto", display);
+	menu.AddItem("requires_auto", display, flags);
 	FormatEx(display, sizeof(display), "[%s] Requires easybhop", gA_State.requires_easybhop ? "+" : "-");
-	menu.AddItem("requires_easybhop", display);
+	menu.AddItem("requires_easybhop", display, flags);
 	FormatEx(display, sizeof(display), "[%s] Requires no velocity cap\n ", gA_State.requires_uncappedvel ? "+" : "-");
-	menu.AddItem("requires_uncappedvel", display);
+	menu.AddItem("requires_uncappedvel", display, flags);
 
 	int tempstyle = Shavit_GetBhopStyle(client);
 	Shavit_GetStyleStrings(tempstyle, sStyleName, display, sizeof(display));
@@ -219,7 +224,7 @@ void SQLCallback_UpdateCurrentMapState(Database db, DBResultSet results, const c
 {
 	if (results == null || error[0] != '\0')
 	{
-		LogError("query failed. fuck it... Error: %s", error);
+		LogError("query failed. fuck it... (%s) Error: %s", gS_Map, error);
 		return;
 	}
 }
@@ -228,9 +233,6 @@ void SQLCallback_UpdateCurrentMapState(Database db, DBResultSet results, const c
 
 void SQL_QueryCurrentMapState()
 {
-	if (!gB_DBInitialized)
-		return;
-
 	char query[512];
 	FormatEx(query, sizeof(query), "SELECT requires_auto, requires_easybhop, requires_uncappedvel FROM impossible_settings WHERE map = '%s'", gS_Map);
 	gH_DB.Query(SQLCallback_QueryCurrentMapState1, query);
@@ -242,7 +244,7 @@ void SQLCallback_QueryCurrentMapState1(Database db, DBResultSet results, const c
 {
 	if (results == null || error[0] != '\0')
 	{
-		LogError("Failed to query requires_auto, requires_easybhop, and requires_uncappedvel for map. Error: %s", error);
+		LogError("Failed to query requires_auto, requires_easybhop, and requires_uncappedvel for map (%s). Error: %s", gS_Map, error);
 		return;
 	}
 
@@ -254,13 +256,15 @@ void SQLCallback_QueryCurrentMapState1(Database db, DBResultSet results, const c
 		gA_State.requires_easybhop = !!results.FetchInt(1);
 		gA_State.requires_uncappedvel = !!results.FetchInt(2);
 	}
+
+	YellAtUsers();
 }
 
 void SQLCallback_QueryCurrentMapState2(Database db, DBResultSet results, const char[] error, any data)
 {
 	if (results == null || error[0] != '\0')
 	{
-		LogError("Failed to query impossible styles for map. Error: %s", error);
+		LogError("Failed to query impossible styles for map (%s). Error: %s", gS_Map, error);
 		return;
 	}
 
@@ -270,13 +274,27 @@ void SQLCallback_QueryCurrentMapState2(Database db, DBResultSet results, const c
 	{
 		gA_State.style[results.FetchInt(0)] = true;
 	}
+
+	YellAtUsers();
 }
 
+void YellAtUsers()
+{
+	if (gI_MapQueries != 2)
+		return;
+
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i))
+			Shavit_OnStyleChanged(i, -1, Shavit_GetBhopStyle(i), -1, false);
+	}
+}
 
 
 char gS_TableQueries[][] = {
 	"CREATE TABLE IF NOT EXISTS impossible_settings(map TEXT PRIMARY KEY, requires_auto INT NOT NULL, requires_easybhop INT NOT NULL, requires_uncappedvel INT NOT NULL);",
 	"CREATE TABLE IF NOT EXISTS impossible_style(style INT NOT NULL, map TEXT NOT NULL);",
+	"CREATE INDEX IF NOT EXISTS impossible_style_map ON impossible_style(map);",
 };
 
 void SQL_CreateTables()
@@ -290,7 +308,7 @@ void SQL_CreateTables()
 void Trans_DbInitSuccess(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
 	gB_DBInitialized = true;
-	if (gI_MapQueries == 0)
+	if (gB_MapStart)
 		SQL_QueryCurrentMapState();
 }
 
