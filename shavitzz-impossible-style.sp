@@ -26,6 +26,7 @@ bool gB_MapStart = false;
 Convar gCV_ShowStyleSettingOptions = null;
 Convar gCV_ShowOnlyTheseStyles = null;
 ArrayList gH_ShowOnlyTheseStyles = null;
+bool gB_SpawnedOnce[MAXPLAYERS+1];
 
 enum struct CurrentMapState
 {
@@ -51,6 +52,8 @@ public void OnPluginStart()
 	gCV_ShowStyleSettingOptions = new Convar("shavitzz_impossible_style_settings", "1", "Show the autobhop/easybhop/uncapped-vel things at the top of the menu.", 0, true, 0.0, true, 1.0);
 	gCV_ShowOnlyTheseStyles = new Convar("shavitzz_impossible_style_only", "", "Show only these styles in the menu.\n(Style names are compared in a case-insensitive way and spaces are trimmed from the ends)\nExamples:\n shavitzz_impossible_style_only \"scroll,_strafe,400 velocity\"\n shavitzz_impossible_style_only \"low gravity, scroll\"\n");
 	Convar.AutoExecConfig();
+
+	HookEvent("player_spawn", player_spawn);
 }
 
 public void OnMapStart()
@@ -117,11 +120,12 @@ public void OnConfigsExecuted()
 public void OnClientPutInServer(int client)
 {
 	gB_HasMenuOpened[client] = false;
+	gB_SpawnedOnce[client] = false;
 }
 
 public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int track, bool manual)
 {
-	if (oldstyle != newstyle && (gA_State.style[newstyle] || isStyleSettingsImpossible(newstyle)))
+	if (gB_SpawnedOnce[client] && oldstyle != newstyle && (gA_State.style[newstyle] || isStyleSettingsImpossible(newstyle)))
 	{
 		for (int i = 0; i < 6; i++)
 		{
@@ -129,6 +133,17 @@ public void Shavit_OnStyleChanged(int client, int oldstyle, int newstyle, int tr
 			Shavit_GetStyleStrings(newstyle, sStyleName, stylename, sizeof(stylename));
 			Shavit_PrintToChat(client, "Map is %simpossible%s on this style (%s%s%s)!", gS_VariableStringColor, gS_TextStringColor, gS_VariableStringColor, stylename, gS_TextStringColor);
 		}
+	}
+}
+
+public void player_spawn(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+
+	if (!gB_SpawnedOnce[client] && !IsFakeClient(client) && GetClientTeam(client) > 1 && IsPlayerAlive(client))
+	{
+		gB_SpawnedOnce[client] = true;
+		Shavit_OnStyleChanged(client, -1, Shavit_GetBhopStyle(client), -1, false);
 	}
 }
 
@@ -340,8 +355,11 @@ void YellAtUsers()
 
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		if (IsClientInGame(i))
+		if (IsClientInGame(i) && GetClientTeam(i) > 1 && IsPlayerAlive(i))
+		{
+			gB_SpawnedOnce[i] = true;
 			Shavit_OnStyleChanged(i, -1, Shavit_GetBhopStyle(i), -1, false);
+		}
 	}
 }
 
