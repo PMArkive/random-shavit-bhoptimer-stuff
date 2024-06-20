@@ -10,7 +10,7 @@ public Plugin myinfo =
 	name = "shavitzz-impossible-style",
 	author = "rtldg",
 	description = "(clients need the Generic admin flag to toggle things)",
-	version = "1.0",
+	version = "1.1",
 	url = "https://github.com/PMArkive/random-shavit-bhoptimer-stuff/blob/main/shavitzz-impossible-style.sp"
 }
 
@@ -164,12 +164,27 @@ Action Command_ImpossibleStyle(int client, int args)
 
 bool isStyleSettingsImpossible(int style)
 {
+#if defined(MAX_STAGES) || defined(_shavit_core_included) // we are 3.0.0 (MAX_STAGES) or one of the latest versions...
+	if (!Shavit_GetStyleSettingBool(style, "enabled"))
+		return true;
+	if (!gA_State.requires_auto && !gA_State.requires_easybhop && !gA_State.requires_uncappedvel)
+		return false; // note this...
+	if (gA_State.requires_auto && !Shavit_GetStyleSettingBool(style, "autobhop"))
+		return true;
+	if (gA_State.requires_easybhop && !Shavit_GetStyleSettingBool(style, "easybhop"))
+		return true;
+	float vel = Shavit_GetStyleSettingFloat(style, "velocity_limit");
+	if (gA_State.requires_uncappedvel && vel != 0.0 && vel <= 400.0)
+		return true;
+	return false;
+#else // else we are in 2.6.0 (most likely)
 	stylesettings_t settings;
 	Shavit_GetStyleSettings(style, settings);
 	return !settings.iEnabled ||
 		(!settings.bAutobhop && gA_State.requires_auto) ||
 		(!settings.bEasybhop && gA_State.requires_easybhop) ||
-		(settings.fVelocityLimit != 0.0 && settings.fVelocityLimit < 400.0 && gA_State.requires_uncappedvel);
+		(settings.fVelocityLimit != 0.0 && settings.fVelocityLimit <= 400.0 && gA_State.requires_uncappedvel);
+#endif
 }
 
 void OpenTheMenu(int client, int position)
