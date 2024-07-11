@@ -32,6 +32,8 @@ public void Shavit_OnDatabaseLoaded()
 			FileType type;
 			while (dir.GetNext(replayname, sizeof(replayname), type))
 			{
+				if (type != FileType_File || StrEqual(replayname, ".") || StrEqual(replayname, ".."))
+					continue;
 				Format(replayname, sizeof(replayname), "%s/%s", path, replayname);
 				insert_into_database(replayname);
 				//gA_Styles[style].PushString(replayname);
@@ -59,7 +61,7 @@ void insert_into_database(const char[] replaypath)
 		"INSERT IGNORE INTO users (auth, name, ip, lastlogin) VALUES (%d, '%d', 0, 0);",
 		header.iSteamID,
 		header.iSteamID);
-	gH_SQL.Query(SQLCallback_InsertUser, query, 0, DBPrio_High);
+	QueryLog(gH_SQL, SQLCallback_InsertUser, query, 0, DBPrio_High);
 	FormatEx(query, sizeof(query),
 		"INSERT INTO playertimes \
 		(auth, map,  time, jumps, date, style, strafes, sync, points, track, perfs) VALUES \
@@ -69,7 +71,7 @@ void insert_into_database(const char[] replaypath)
 		header.fTime,
 		header.iStyle,
 		header.iTrack);
-	gH_SQL.Query(SQLCallback_InsertTime, query, 0, DBPrio_Normal);
+	QueryLog(gH_SQL, SQLCallback_InsertTime, query, 0, DBPrio_High);
 }
 
 void SQLCallback_InsertUser(Database db, DBResultSet results, const char[] error, any data)
