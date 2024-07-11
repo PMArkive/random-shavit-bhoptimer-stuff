@@ -22,7 +22,7 @@ public void Shavit_OnDatabaseLoaded()
 	for (int style = 0; style < STYLE_LIMIT; style++)
 	{
 		char path[PLATFORM_MAX_PATH];
-		FormatEx(path, sizeof(path), "%s/%d", style);
+		FormatEx(path, sizeof(path), "%s/%d", replaybotpath, style);
 		DirectoryListing dir = OpenDirectory(path);
 		if (dir)
 		{
