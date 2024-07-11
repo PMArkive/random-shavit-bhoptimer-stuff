@@ -58,7 +58,7 @@ void insert_into_database(const char[] replaypath)
 
 	char query[512];
 	FormatEx(query, sizeof(query),
-		"INSERT IGNORE INTO users (auth, name, ip, lastlogin) VALUES (%d, '%d', 0, 0);",
+		"INSERT IGNORE INTO users (auth, name, ip, lastlogin) VALUES (%d, '[U:1:%d]', 0, 0);",
 		header.iSteamID,
 		header.iSteamID);
 	QueryLog(gH_SQL, SQLCallback_InsertUser, query, 0, DBPrio_High);
