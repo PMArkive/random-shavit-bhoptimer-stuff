@@ -61,7 +61,7 @@ void insert_into_database(const char[] replaypath)
 		header.iSteamID);
 	gH_SQL.Query(SQLCallback_InsertUser, query, 0, DBPrio_High);
 	FormatEx(query, sizeof(query),
-		"INSERT IGNORE playertimes \
+		"INSERT INTO playertimes \
 		(auth, map,  time, jumps, date, style, strafes, sync, points, track, perfs) VALUES \
 		(%d,   '%s', %.9f, 1,     1,    %d,    1,       0,    0,      %d,    0);",
 		header.iSteamID,
