@@ -1,3 +1,6 @@
+// Add this to your ezscroll style config:
+//    "ezscroll" "1"
+
 #include <sourcemod>
 #include <sdktools_trace>
 #include <shavit/core>
@@ -23,7 +26,7 @@ stock bool TRFilter_NoPlayers(int entity, int mask, any data)
     return !(1 <= entity <= MaxClients);
 }
 
-float GetDistanceToGround(int client)
+stock float GetDistanceToGround(int client)
 {
     float start[3];
     GetEntPropVector(client, Prop_Data, "m_vecOrigin", start);
@@ -46,9 +49,10 @@ float GetDistanceToGround(int client)
     return 0.0;
 }
 
-public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+//public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+public Action Shavit_OnUserCmdPre(int client, int &buttons, int &impulse, float vel[3], float angles[3], TimerStatus status, int track, int style, int mouse[2])
 {
-    if (!Shavit_GetStyleSettingBool(Shavit_GetBhopStyle(client), "ezscroll"))
+    if (!Shavit_GetStyleSettingBool(style, "ezscroll"))
     {
         return Plugin_Continue;
     }
@@ -65,5 +69,5 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
     gI_PreviousGroundEntity[client] = m_hGroundEntity;
     gI_PreviousOldButtons[client]   = m_OldButtons;
-    return Plugin_Continue;
+    return Plugin_Changed;
 }
