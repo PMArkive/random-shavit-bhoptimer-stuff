@@ -1,6 +1,15 @@
 
 #include <clientprefs>
 
+public Plugin myinfo =
+{
+	name = "scrollpace",
+	author = "rtldg",
+	description = "",
+	version = "1",
+	url = "https://github.com/PMArkive/random-shavit-bhoptimer-stuff",
+};
+
 #define POINTS_TO_TRACK 35
 #define LAST_POINT (POINTS_TO_TRACK-1)
 
