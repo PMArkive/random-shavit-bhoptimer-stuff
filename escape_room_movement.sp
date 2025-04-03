@@ -6,5 +6,7 @@ public void OnMapStart()
 		ServerCommand("sm plugins unload rngfix");
 		ServerCommand("sm plugins unload momsurffix2");
 		ServerCommand("sm plugins unload headbugfix");
+		ServerCommand("sm plugins unload landfix");
+		ServerCommand("sm plugins unload landfix_haze");
 	}
 }
