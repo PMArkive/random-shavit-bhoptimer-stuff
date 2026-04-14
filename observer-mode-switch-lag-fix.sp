@@ -35,8 +35,8 @@ public Action Timer_ChangeObserverMode(Handle timer, DataPack pack)
 
 public Action CommandListener_SpecNextPrev(int client, const char[] command, int args)
 {
-	if(!IsClientInGame(client))
-		return Plugin_Handled;
+	if (!IsClientInGame(client))
+		return Plugin_Continue;
 
 	//PrintToConsole(client, "_SpecNextPrev = %s", command);
 	int iObserverMode = GetEntProp(client, Prop_Send, "m_iObserverMode");
